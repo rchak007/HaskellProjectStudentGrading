@@ -1,0 +1,9 @@
+Load_val 1
+Write_var X
+Write_var Y
+Read_var X
+Load_val 5
+Add
+Read_var Y
+Multiply
+Return_value
