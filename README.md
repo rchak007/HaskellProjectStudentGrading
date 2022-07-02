@@ -78,7 +78,7 @@ An Add or Multiply will consume 2 from the stack and will be popped out of the s
 
 ### Results
 
-
+#### Result 1 - correct assignment 
 
 ![image-20220702135120780](Images/asg1Result.png)
 
@@ -87,6 +87,8 @@ An Add or Multiply will consume 2 from the stack and will be popped out of the s
 
 
 
+
+#### Result 1 - Incorrect assignment 
 
 ![image-20220702135337178](Images/asg3AddErr.png)
 
