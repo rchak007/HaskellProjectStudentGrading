@@ -1,0 +1,2 @@
+# HaskellProjectStudentGrading
+Automate Student Grading 
