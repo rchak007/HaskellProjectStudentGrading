@@ -51,133 +51,6 @@ import Control.Monad.Reader
 
 
 
--- data ByteCode i var = Load_val i 
---               | Write_var var
---               | Read_var var
---               | Add
---               | Multiply
---               | Return_value
---               | Zero
---               deriving (Show, Eq)
-
-
--- 
-
--- assignment :: [Bytecode]
-line1 = Load_val 1
-line2 = Write_var "X"
-line3 = Load_val 22
-line4 = Write_var "Y"
-line5 = Read_var "X"
-line6 = Load_val 5
-line7 = Add
-line8 = Read_var "Y"
-line9 = Multiply
-line10 = Return_value
-
-assignment :: [ByteCode Int String]
-
--- assignment = [line1, line2, line3,line4,line5,line6,line7,line8, line9, line10]
-
--- assignment = [line1, line2, line3,line4,line5,line6,line7,line7, line9, line10]
-
-assignment = [line2, line3,line4,line5,line6,line7,line8, line9, line10]
-
-
-bytecodeTup :: (ByteCode Int String) -> (ByteCode Int String, Int)
-bytecodeTup a = (a, 1)
--- simple test with Applicative
-assignmentTupAppl = [bytecodeTup] <*> assignment
-
-
--- assignmentTup :: [(ByteCode Int String, Int)]
--- assignmentTup = convertAsgTup assignment
--- asg_length = length assignment 
-
--- convertAsgTup :: assignment -> assignmentTup
--- -- convertAsgTup [] = [(,)]
--- convertAsgTup [asg] = [asg,1]
-
-
-result_assignment :: [ByteCode Int String] -> Bool
-result_assignment []  = False
-
--- type Index = Int 
--- convAsgTup :: assignment -> State Index assignment
--- convAsgTup [as] = [as] >>= \a -> get >>= \i -> (return (a, i ) )
-
-list1 = [1,2,3]
-listMonad list1 = list1 >>= \l -> return (l+1)
--- *Main> listMonad list1
--- [2,3,4]
-
-
--- type AssignSt = 
--- convAsgTup assignment = assignment >>= \l -> return (l,1)
-
-
--- example2 :: StateT Int [] ()
--- example2 = do 
---   v <- get
---   lift.putStrLn $ "The state is " ++ show v
---   liftIO $ putStrLn ("Enter the instruction: ")
---   instruction <- liftIO $ getLine 
---   case instruction of 
---     "i" -> do 
---       put (v+1)
---       example2     -- will keep running 
---     "d" -> do
---       put (v-1)
---       example2
---     "x" -> return ()
-
-
--- convAsgTup assignment = do 
---   i <- get 
---   modify (+1)
---   return (a,i)
-
--- sum' :: ListT (State Int) Int
--- sum' = do
---     lift $ put 0
---     x <- ListT $ return [1,2,3]
---     lift $ modify (+x)
---     return $ x + 1
-
--- testAs :: Int -> [(assignment, Int)]
--- testAs = runStateT $ do
---     a <- lift assignment
---     modify (+a)
---     return a
-
-test :: Int -> [(Int, Int)]
-test = runStateT $ do
-    a <- lift [1..10]
-    modify (+a)
-    return a
-
-
-type Val = Int
-
-type Consumed = Bool
--- Number each of the ByteCode instruction read
--- for now just doing with simple Function to tranform read list of ByteCode into a list ByteCode as tuple with its sequence number.
-
--- ver 1.0
-type ByteCodeTup = (ByteCode Int String, Index, Val, Bool, Consumed)
-assgConvertTupFunc :: Int -> [ByteCode Int String] -> [ByteCodeTup]
-assgConvertTupFunc _ [] = []
-assgConvertTupFunc i [bc] = [(bc,i, 0, True, False)]
-assgConvertTupFunc i (bc:bcs) = (bc,i,0, True, False) : assgConvertTupFunc (i+1) bcs
-
-assignmentTupList = assgConvertTupFunc 1 assignment
--- *Main> assignmentTupList
--- [(Load_val 1,1,0,True),(Write_var "X",2,0,True),(Load_val 2,3,0,True),(Write_var "Y",4,0,True),(Read_var "X",5,0,True),(Load_val 1,6,0,True),(Add,7,0,True),(Read_var "Y",8,0,True),(Multiply,9,0,True),(Return_value,10,0,True)]
-
-consAssignmentTupList = assignmentTupList
-
-
--- ver 2.0
 
 transformBytecodeAddIndex :: Int -> [ByteCode Int String] -> [ByteCodeIndexed]
 transformBytecodeAddIndex _ [] = []
@@ -188,8 +61,6 @@ bytecodeIndexList :: MonadIO m => [ByteCode Int String] -> Int -> m [ByteCodeInd
 bytecodeIndexList asgList i = return (transformBytecodeAddIndex i asgList)
 
 
-
--- ver 2.0
 -- we will now take the BytecodeIndexed and reverse it first --
 -- goal is to check the Write - take the variable and create a variable list from it.
 -- also will check next one is Load - if not error. 
@@ -198,72 +69,8 @@ bytecodeIndexList asgList i = return (transformBytecodeAddIndex i asgList)
 -- i dont want to still use Reader since this function will first get rid of the Write and Load combos.
 
 
--- handleWrite :: (MonadState StateStack m) => [ByteCodeIndexed] -> m [ByteCodeIndexed]
-
-
--- handleWrite []  = do 
---                     return $ putStrLn " in write list "
---                     return ()
--- handleWrite [((Write_var s), i)] = 
---                             do 
---                               ss <- get
---                               return $ putStrLn " in write list "
---                               put ( ss { errorMessage = " in write " : errorMessage ss})
--- handleWrite [(bc, i)] = do 
---                           return $ putStrLn " in write list "
---                           return ()
-
--- handleWrite (((Write_var s), i) : bcs) = 
---                             do 
---                               return $ putStrLn " in write list "
---                               ss <- get
---                               put ( ss { errorMessage = " in write " : errorMessage ss})
---                               -- return ( mconcat ( return ((Write_var s), i) : handleWrite bcs ) )
--- handleWrite ((bc, i) : bcs ) = do 
---                   ss <- get
---                   put ( ss { errorMessage = ["In Other list Write"]})
---                   return ()
-
-
-
--- test...
-handleWrite2 :: (MonadIO m, MonadState StateStack m) => [ByteCodeIndexed] -> m ()
-handleWrite2 _ = do 
-                  ss <- get
-                  put ( ss { errorMessage = ("In Others2 Write" : errorMessage ss)})
-                  return ()
--- notes -- copied from canPlay in snake.
--- handleWriteLoadCombo :: (MonadState StateStack m) => [ByteCodeIndexed] -> [ByteCodeIndexed] -> m [ByteCodeIndexed]
--- -- handleWriteLoadCombo :: [ByteCodeIndexed] -> [ByteCodeIndexed] -> State StateStack [ByteCodeIndexed]
--- handleWriteLoadCombo [] bcC = do
---   stateCur <- get
---   return []
--- handleWriteLoadCombo [((Write_var s), i)] bcC = 
---                 do 
---                     ss <- get 
---                     if (fst (checkLoad bcC (i+1)) == True) 
---                     then         -- load is found right after Write , add the variables list, mark this write in writeIndex.
---                         return $ put ( ss { stackComputation = stackComputation ss , 
---                                    variables = (s, (snd (checkLoad bcC (i+1)))) : (variables ss), 
---                                    errorF = errorF ss,
---                                    errorMessage = errorMessage ss,
---                                    writesIndex = i : (writesIndex ss)} )
---                         return [] 
---                     else     -- report error cause load has to be there before write.  
---                         put ( ss { stackComputation = stackComputation ss , 
---                                    variables = variables ss, 
---                                    errorF = (False : errorF ss) ,
---                                    errorMessage = " Write does not have Load" : errorMessage ss,
---                                    writesIndex = writesIndex ss})
---                         return []                        
--- handleWriteLoadCombo [ (bc,i)] bcC = return [ (bc,i)]
-
-
 -- writeVar :: (MonadState StateStack m) => StateStack -> String -> Int -> m StateStack 
 -- writeVar ss var val = put { ss 
-
-
-
 
 
 -- ver 2.0
@@ -281,356 +88,6 @@ checkLoad (((Load_val val), ind) : bcs) indSeek = if (ind == indSeek)
                                           then (True, val)
                                           else checkLoad bcs indSeek
 checkLoad (( _ , ind) : bcs) indSeek = checkLoad bcs indSeek
-
-
-
-  
-
-
-
-
-
-
-
--- write will check earlier index and if its Load then just keep that value and also return 
--- 
-writeCheck ::   [ByteCodeTup] -> [ByteCodeTup]
--- if its a write 
-writeCheck [(Write_var var,ind, val, booll, bools)]  = [(Write_var var, ind, snd (getLoadFound (consAssignmentTupList) (ind-1)), fst (getLoadFound (consAssignmentTupList) (ind-1)), bools)]
-writeCheck [bt]  = [bt]         -- others
-
-writeCheck ((Write_var var,ind, val, booll, bools):bts) = (Write_var var, ind, snd (getLoadFound (consAssignmentTupList) (ind-1)), fst (getLoadFound ( consAssignmentTupList) (ind-1)), bools) : writeCheck bts
-writeCheck (bt :bts) = bt : writeCheck bts
-
-
-afterWriteAssg = writeCheck consAssignmentTupList
-
--- *Main> writeCheck consAssignmentTupList 
--- [(Load_val 1,1,0,True),
--- (Write_var "X",2,1,True),     -- value 1 correct
--- (Load_val 2,3,0,True),
--- (Write_var "Y",4,2,True),     -- Value 2 correct
--- (Read_var "X",5,0,True),
--- (Load_val 1,6,0,True),
--- (Add,7,0,True),
--- (Read_var "Y",8,0,True),
--- (Multiply,9,0,True),
--- (Return_value,10,0,True)]
-
-
--- temp.. 
-getLoadVal consAssignmentTupList _ = 1
-
--- this Function finds the Load_val based on Index and fills the 3rd tuple with that value and found status.
-getLoadFound :: [ByteCodeTup] -> Int -> (Bool, Int)
-getLoadFound [(Load_val ldVal, ind, val, bool1, bools) ] indf = if ind == indf 
-                                                    then (True, ldVal)
-                                                    else (False, 0)
-getLoadFound [_,_,_,_, _] indf = (False, 0)
-getLoadFound ((Load_val ldVal, ind, val, bool1, bools): bts) indf = (if ind == indf 
-                                                    then (True, ldVal)
-                                                    else ( False, 0 ) )
-                                                    `aggTup` (getLoadFound bts indf)
-getLoadFound (_: bts) indf =  (False,0)  `aggTup`  (getLoadFound bts indf)
-
--- *Main> getLoadFound consAssignmentTupList 3
--- (True,2)
--- *Main> getLoadFound consAssignmentTupList 1
--- (True,1)
--- *Main> getLoadFound consAssignmentTupList 6
--- (True,1)
--- *Main> getLoadFound consAssignmentTupList 2
--- (False,0)
-
-
-aggTup :: (Bool, Int) -> (Bool, Int) -> (Bool, Int)
-aggTup (b1, i1) (b2,i2) = ((b1 || b2), (i1 + i2))
-
-
-aggTupMult :: (Bool, Int) -> (Bool, Int) -> (Bool, Int)
-aggTupMult (b1, i1) (b2,i2) = ((b1 || b2), (i1 * i2))
-
--- get the variable value 
-getWriteFound :: [ByteCodeTup] -> String -> (Bool, Int)
-getWriteFound [(Write_var var, ind, val, bool1, bools) ] varf = if var == varf 
-                                                    then (True, val)
-                                                    else (False, 0)
-getWriteFound [_,_,_,_] varf = (False, 0)     -- if its not write dont do anything
-getWriteFound ((Write_var var, ind, val, bool1, bools): bts) varf = (if var == varf 
-                                                    then (True, val)
-                                                    else ( False, 0 ) )
-                                                    `aggTup` (getWriteFound bts varf)
-getWriteFound (_: bts) varf =  (False,0)  `aggTup`  (getWriteFound bts varf)
-
--- *Main> getWriteFound afterWriteAssg "Y"
--- (True,2)
--- *Main> getWriteFound afterWriteAssg "X"
--- (True,1)
--- *Main> getWriteFound afterWriteAssg "Z"
--- (False,0)
--- *Main> getWriteFound afterWriteAssg "A"
--- (False,0)
-
-
-
-
-readCheck ::   [ByteCodeTup] -> [ByteCodeTup]
--- if its a write 
-readCheck [(Read_var var,ind, val, booll, bools)]  = [(Read_var var, ind, snd (getWriteFound afterWriteAssg var), fst (getWriteFound afterWriteAssg var), bools)]
-readCheck [bt]  = [bt]         -- others
-
-readCheck ((Read_var var,ind, val, booll, bools):bts) = (Read_var var, ind, snd (getWriteFound afterWriteAssg var), fst (getWriteFound afterWriteAssg var), bools) : readCheck bts
-readCheck (bt :bts) = bt : readCheck bts       -- first element is NOT read. 
-
--- *Main> readCheck afterWriteAssg 
--- [(Load_val 1,1,0,True),
--- (Write_var "X",2,1,True),      -- X = 1
--- (Load_val 2,3,0,True),
--- (Write_var "Y",4,2,True),      -- Y = 2
--- (Read_var "X",5,1,True),       -- read X = 1
--- (Load_val 1,6,0,True), 
--- (Add,7,0,True),
--- (Read_var "Y",8,2,True),       -- Read 
--- (Multiply,9,0,True),
--- (Return_value,10,0,True)]
-
-afterReadAsg = readCheck afterWriteAssg
-
-
--- Add needs to go back to get 2 matches on Load or Read - any combinations.
-type Seed = Int
-
-getForAdd :: [ByteCodeTup] -> Int -> Int -> (Bool, Int)
-getForAdd [(Read_var var, ind, val, bool1, bools) ] i indp = (False, 0)
-getForAdd [(Load_val ldVal, ind, val, bool1, bools) ] i indp = (False, 0)
-getForAdd ((Read_var var, ind, val, bool1, bools): bts) i indp = if ( i == 2 && ind <= indp )
-                                                      then (True, val) `aggTup` (getForAdd bts 1 indp)
-                                                      else if (i  == 1 && ind <= indp)
-                                                           then (True, val) 
-                                                           else if (ind > indp) 
-                                                                then (False, 0) `aggTup` (getForAdd bts i indp)
-                                                                else (False, 0)
-getForAdd ((Load_val ldVal, ind, val, bool1, bools): bts) i indp = if ( i == 2 && ind <= indp)
-                                                            then (True, ldVal) `aggTup` (getForAdd bts 1 indp)
-                                                            else if (i  == 1 && ind <= indp)
-                                                                 then (True, ldVal) 
-                                                                 else if (ind > indp) 
-                                                                      then (False, 0) `aggTup` (getForAdd bts i indp)
-                                                                       else (False, 0)
--- should not get another Add in the next 2 values prior. 
--- getForAdd (((Add, ind, val, bool1, bools)) : bts) i indp = if ((i == 1 || i == 2) && ind <= indp) 
---                                             then (False, 0)
---                                             else (False, 0)
-getForAdd (_: bts) i indp =  (False,0)  `aggTup`  (getForAdd bts i indp)
--- getForAdd [_,_,_,_,_] i indp = (False, 0) 
-
--- *Main> getForAdd (reverse afterReadAsg ) 2 7
--- (True,2)
-
-
--- 2 adds in a row will still fail.. 
- 
-
--- addCheck ::   [ByteCodeTup] -> [ByteCodeTup]
--- -- if its a write 
--- addCheck [(Add,ind, val, booll)]  = [(Add, ind, snd (getForAdd (reverse afterReadAsg) 2 (ind-1)), fst (getForAdd (reverse afterReadAsg) 2 (ind-1)))]
--- addCheck [bt]  = [bt]         -- others
-
--- addCheck ((Add,ind, val, booll):bts) = (Add , ind, snd (getForAdd ( reverse afterReadAsg) 2 (ind-1)), fst (getForAdd ( reverse afterReadAsg ) 2 (ind-1))) : addCheck bts
--- addCheck (bt :bts) = bt : addCheck bts       -- first element is NOT read. 
-
-
-addCheck ::   [ByteCodeTup] -> [ByteCodeTup]
--- if its a write 
-addCheck [(Add,ind, val, booll, bools)]  = [(Add, ind, snd (getForAdd (reverse (take (ind-1) afterReadAsg)) 2 (ind-1)), fst (getForAdd (reverse (take (ind-1) afterReadAsg)) 2 (ind-1)), True)]
-addCheck [bt]  = [bt]         -- others
-
-addCheck ((Add,ind, val, booll, bools):bts) = (Add , ind, snd (getForAdd ( reverse (take (ind-1) afterReadAsg)) 2 (ind-1)), fst (getForAdd ( reverse (take (ind-1) afterReadAsg )) 2 (ind-1)), True) : addCheck bts
-addCheck (bt :bts) = bt : addCheck bts       -- first element is NOT read. 
-
-
-
-
-
-afterAddAsg = addCheck (afterReadAsg )
-
--- *Main> afterAddAsg 
--- [(Load_val 1,1,0,True),
--- (Write_var "X",2,1,True),
--- (Load_val 22,3,0,True),
--- (Write_var "Y",4,22,True),
--- (Read_var "X",5,1,True),
--- (Load_val 5,6,0,True),
--- (Add,7,6,True),
--- (Read_var "Y",8,22,True),
--- (Multiply,9,0,True),
--- (Return_value,10,0,True)]
-
-
-
-
-
-
-
-getForMult :: [ByteCodeTup] -> Int -> Int -> (Bool, Int)
-getForMult [(Read_var var, ind, val, bool1, bools) ] i indp = (False, 1)
-getForMult [(Load_val ldVal, ind, val, bool1, bools) ] i indp = (False, 1)
-getForMult [_,_,_,_] i indp = (False, 1)   
-
-getForMult ((Read_var var, ind, val, bool1, bools): bts) i indp = if ( i == 2 && ind <= indp )
-                                                      then (True, val) `aggTupMult` (getForMult bts 1 indp)
-                                                      else if (i  == 1 && ind <= indp)
-                                                           then (True, val) 
-                                                           else if (ind > indp) 
-                                                                then (False, 1) `aggTupMult` (getForMult bts i indp)
-                                                                else (False, 1)
-getForMult ((Load_val ldVal, ind, val, bool1, bools): bts) i indp = if ( i == 2 && ind <= indp)
-                                                            then (True, ldVal) `aggTupMult` (getForMult bts 1 indp)
-                                                            else if (i  == 1 && ind <= indp)
-                                                                 then (True, ldVal) 
-                                                                 else if (ind > indp) 
-                                                                      then (False, 1) `aggTupMult` (getForMult bts i indp)
-                                                                       else (False, 1)
-
-
-getForMult ((Add, ind, val, bool1, bools): bts) i indp = if ( i == 2 && ind <= indp)
-                                                            then (True, val) `aggTupMult` (getForMult bts 1 indp)
-                                                            else if (i  == 1 && ind <= indp)
-                                                                 then (True, val) 
-                                                                 else if (ind > indp) 
-                                                                      then (False, 1) `aggTupMult` (getForMult bts i indp)
-                                                                       else (False, 1)
-
-
-
-getForMult (_: bts) i indp =  (False,1)  `aggTupMult`  (getForMult bts i indp)
-
--- *Main> getForMult (reverse afterAddAsg ) 2 9
--- (True,44)
-
-
-
-addMult ::   [ByteCodeTup] -> [ByteCodeTup]
--- if its a write 
-addMult [(Multiply,ind, val, booll, bools)]  = [(Multiply, ind, snd (getForMult (reverse afterAddAsg) 2 (ind-1)), fst (getForMult (reverse afterAddAsg) 2 (ind-1)), True)]
-addMult [bt]  = [bt]         -- others
-
-addMult ((Multiply,ind, val, booll, bools):bts) = (Multiply , ind, snd (getForMult ( reverse afterAddAsg) 2 (ind-1)), fst (getForMult ( reverse afterAddAsg ) 2 (ind-1)), True) : addMult bts
-addMult (bt :bts) = bt : addMult bts 
-
-
--- *Main> addMult (afterAddAsg)
--- [(Load_val 1,1,0,True,False),
--- (Write_var "X",2,1,True,False),
--- (Load_val 22,3,0,True,False),
--- (Write_var "Y",4,22,True,False),
--- (Read_var "X",5,1,True,False),
--- (Load_val 5,6,0,True,False),
--- (Add,7,6,True,True),
--- (Read_var "Y",8,22,True,False),
--- (Multiply,9,132,True,True),
--- (Return_value,10,0,True,False)]
-
-
--- handle Multiple and Add in any sequence 
-combAddMult ::   [ByteCodeTup] -> [ByteCodeTup] -> Int -> [ByteCodeTup]
--- if its a write 
-combAddMult [(Multiply,ind, val, booll, bools)]  btc indp = if (ind == indp )
-                                                        then [(Multiply, ind, snd (getForMult (reverse btc) 2 (ind-1)), fst (getForMult (reverse btc) 2 (ind-1)), True)]
-                                                        else [(Multiply,ind, val, booll, bools)]
-
-combAddMult [(Add,ind, val, booll, bools)] btc indp  = if (ind == indp) 
-                                                   then [(Add, ind, snd (getForAdd (reverse (take (ind-1) btc)) 2 (ind-1)), fst (getForAdd (reverse (take (ind-1) btc)) 2 (ind-1)), True)]
-                                                   else [(Add,ind, val, booll, bools)]
-
-combAddMult [bt] bt' indp  = [bt]     -- others
-
-
-combAddMult ((Multiply,ind, val, booll, bools):bts) btc indp = if (ind == indp) 
-                                                           then (Multiply , ind, snd (getForMult ( reverse btc) 2 (ind-1)), fst (getForMult ( reverse btc ) 2 (ind-1)), True) : combAddMult bts btc indp
-                                                           else ((Multiply,ind, val, booll, bools): combAddMult bts btc indp)
-
-combAddMult ((Add,ind, val, booll, bools):bts) btc indp = if (ind == indp) 
-                                                      then (Add , ind, (snd (getForAdd ( reverse (take (ind-1) btc)) 2 (ind-1)) ), fst (getForAdd ( reverse (take (ind-1) btc )) 2 (ind-1)), True) : combAddMult bts btc indp
-                                                      else ((Add,ind, val, booll, bools):combAddMult bts btc indp)
-
-combAddMult (bt :bts) btc indp = bt : combAddMult bts btc indp
-
--- function takes length. 
--- take a Monad bytecodeTup >>= \bytecode -> Monad bytecode.
-
-byteCodeJust :: [ByteCodeTup] -> Int -> Maybe ([ByteCodeTup], Int)
-byteCodeJust bt i = Just (bt, i)
-
-justBytecodeWStatus = byteCodeJust (afterReadAsg) (length afterReadAsg)
-
-finalByteCode = (justBytecodeWStatus) >>= \(bt, i) -> processAssg bt 1 
-
-processAssg :: [ByteCodeTup] -> Int -> Maybe (([ByteCodeTup], Int))
-processAssg bt i  = if (i == (length bt)) 
-                   then return (bt,i)
-                   else (return (combAddMult bt bt i, i )) >>= \(bt',i') -> processAssg bt' (i'+1) 
-
-
-
-
-
--- bindMaybe1 = Just 3 >>= (\x -> Just 5 >>= \y -> Just (x + y))
--- -- *Main> bindMaybe1
--- -- Just 8
-
-
-
-
--- issues - what if we reverse the order or Multiply and Add.
--- need to have another wrapper to call which ever comes first.
-
--- we also have issue of 2 adds in a row. -- maybe 
--- also when i pass List along need to do Take so i dont have to reverse etc.
-
-
-
-
-
-
--- *Main> afterReadAsg
--- [(Load_val 1,1,0,True,False),
--- (Write_var "X",2,1,True,False),
--- (Load_val 22,3,0,True,False),
--- (Write_var "Y",4,22,True,False),
--- (Read_var "X",5,1,True,False),
--- (Load_val 5,6,0,True,False),
--- (Add,7,0,True,False),
--- (Read_var "Y",8,22,True,False),
--- (Multiply,9,0,True,False),
--- (Return_value,10,0,True,False)]
-
--- *Main> combAddMult afterReadAsg 7
--- [(Load_val 1,1,0,True,False),
--- (Write_var "X",2,1,True,False),
--- (Load_val 22,3,0,True,False),
--- (Write_var "Y",4,22,True,False),
--- (Read_var "X",5,1,True,False),
--- (Load_val 5,6,0,True,False),
--- (Add,7,0,True,False),
--- (Read_var "Y",8,22,True,False),
--- (Multiply,9,0,True,False),
--- (Return_value,10,0,True,False)]
-
-
-
--- *Main> finalByteCode
--- Just ([
--- (Load_val 1,1,0,True,False),
--- (Write_var "X",2,1,True,False),
--- (Load_val 22,3,0,True,False),
--- (Write_var "Y",4,22,True,False),
--- (Read_var "X",5,1,True,False),
--- (Load_val 5,6,0,True,False),
--- (Add,7,6,True,True),
--- (Read_var "Y",8,22,True,False),
--- (Multiply,9,132,True,True),
--- (Return_value,10,0,True,False)],10)
 
 
 strAsg :: [String] -> IO (ByteCode Int String)
@@ -726,11 +183,12 @@ handleLoad (bc : bcs ) = do
                   return ()
 
 -- ver 2.0
+-- First we put update state writeIndex with all the writes we have
 handleWrite :: (MonadIO m, MonadState StateStack m) => [ByteCodeIndexed] -> m ()
 handleWrite [] = return ()
 handleWrite (((Write_var s),i) : bcs ) = do 
                   ss <- get
-                  return $ putStrLn " in PutStrLn BLANK write list "
+                  --return $ putStrLn " in PutStrLn BLANK write list "
                   put ( ss { -- errorMessage = ("In Others1 Write" : errorMessage ss), 
                              writesIndex = i: writesIndex ss})
                   s2 <- get
@@ -738,7 +196,7 @@ handleWrite (((Write_var s),i) : bcs ) = do
                   return ()
 handleWrite (bc : bcs ) = do 
                   ss <- get
-                  return $ putStrLn " in PutStrLn BLANK write list "
+                  -- return $ putStrLn " in PutStrLn BLANK write list "
                   -- put ( ss { errorMessage = ("Not Write" : errorMessage ss)})
                   s2 <- get
                   handleWrite bcs
@@ -793,13 +251,21 @@ deleteLoad ((indL, valL) : tupL ) indD = if (indL == indD)
 compute :: (MonadIO m, MonadReader [ByteCodeIndexed] m, MonadState StateStack m) => [ByteCodeIndexed] -> m ()
 compute [] = return ()
 compute [(Return_value,i)]  = do 
-                                  io . putStrLn $ " io test from Return - "
+                                  --io . putStrLn $ " io test from Return - "
                                   ss <- get
                                   let errM =  errorMessage ss
+                                  let stackCompSS = stackComputation ss
                                   let errF = errorF ss
                                   let logM = logMessage ss
-                                  put ( ss { logMessage = "i am in Return in compute with Index " : show i:  logM }  )
-                                  return ()
+                                  if ((length stackCompSS) /= 1)
+                                  then 
+                                      do 
+                                          put ( ss { errorMessage = "Return error has more than 1 computation left " : show i:  errM }  )
+                                          return ()
+                                  else 
+                                      do 
+                                          put ( ss { logMessage = "i am in Return in compute with Index " : show i:  logM }  )
+                                          return ()
 
 
 -- need to Multiply the first 2 in StackComputation list and remove those 2 and insert this new value. 
@@ -963,7 +429,7 @@ printList (a:as) = do
 renderState :: (MonadIO m, MonadReader [ByteCodeIndexed] m, MonadState StateStack m) => m ()
 renderState = do
     stateCur <- get
-    io . putStrLn $ " io test- " 
+    -- io . putStrLn $ " io test- " 
     io . putStrLn $ "errorFlags - " ++ (show . errorF $ stateCur)
     io . putStrLn $ "Message - " ++ (show . errorMessage $ stateCur)
     io . putStrLn $ "WriteIndexes - " ++ (show . writesIndex $ stateCur)
@@ -971,8 +437,18 @@ renderState = do
     io . putStrLn $ "Variables - " ++ (show . variables $ stateCur)
     io . putStrLn $ "stackComputation - " ++ (show . stackComputation $ stateCur)
     -- io . putStrLn $ "Log Message - " ++ (show . logMessage $ stateCur)
+    io . putStrLn $ "Log Messages: - "
     printList (logMessage stateCur)
 
+
+-- uses Monad Reader to get the ByteCodeIndexed
+-- calls handleWrite which indexes all the Write instructions into State writesIndex
+-- calls handleLoad which indexed all the Load instructions into the State loadIndex
+-- calls handleVariables - this uses Write to get preceding Load to store as variables List 
+--      which can be accessed later as Read. Also removes the Load index since we wont use that Load fo consumption 
+--                       in future as these will be accessed with Read.
+-- calls compute which parses instruction one by one and either pushes in to Stack computation 
+--        or uses for consumption and stores in stack after value is computed.
 operations :: (MonadIO m, MonadReader [ByteCodeIndexed] m, MonadState StateStack m) => m ()
 operations = do 
     byteAsgIndexed <- ask

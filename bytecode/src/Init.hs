@@ -9,7 +9,7 @@ import Util
 unPack :: [Text.Text] -> [String]
 unpack [] = []
 unPack [t] = [Text.unpack t]
-unPack (t : ts) = (Text.unpack t) : unPack ts
+unPack (t : ts) = Text.unpack t : unPack ts
 
 wordsStringAsg :: [String] -> [ByteCode Int String]
 wordsStringAsg [] = []
@@ -17,28 +17,32 @@ wordsStringAsg [s] = [strByte (words s)]
 wordsStringAsg (str: strs) = (strByte (words str)) : wordsStringAsg strs
 
 strByte :: [String] -> (ByteCode Int String)
-strByte [w] 
+strByte [w]
    | (w == "Add") = Add
    | (w == "Multiply") = Multiply
    | (w == "Return_value") = Return_value
-strByte (w:w2:ws) 
-   | (w == "Load_val") = (Load_val (read w2))
-   | (w == "Write_var") = (Write_var w2)
-   | (w == "Read_var") = (Read_var w2)
-   -- | otherwise = return Zero    -- for now --- later have some error messages
+strByte (w:w2:ws)
+   | w == "Load_val" = Load_val (read w2)
+   | w == "Write_var" = Write_var w2
+   | w == "Read_var" = Read_var w2
+-- | otherwise = return Zero    -- for now --- later have some error messages
 
 
 
 
+-- Reads the file and gets Text.Text
+-- then we unpack it to String using `unPack` 
+-- then we convert to ByteCode data type with `wordsStringAsg`
 
 initByte :: MonadIO m => m [ByteCode Int String]
 -- initByte :: MonadIO m => m  [ByteCodeIndexed]
 initByte = do
-  -- ls <- io (fmap Text.lines (Text.readFile "src/assg1.txt"))
-  -- ls <- io (fmap Text.lines (Text.readFile "src/assg2Err.txt"))
-  --ls <- io (fmap Text.lines (Text.readFile "src/assg3AddErr.txt"))
-  ls <- io (fmap Text.lines (Text.readFile "src/assg4.txt"))
+  ls <- io (fmap Text.lines (Text.readFile "src/assg1.txt"))
+--   ls <- io (fmap Text.lines (Text.readFile "src/assg2Err.txt"))
+--   ls <- io (fmap Text.lines (Text.readFile "src/assg3AddErr.txt"))
+--  ls <- io (fmap Text.lines (Text.readFile "src/assg4.txt"))
   -- ls <- io (fmap Text.lines (Text.readFile "src/assg5ReturnErr.txt"))
+  -- ls <- io (fmap Text.lines (Text.readFile "src/assg6ErrReturnComp.txt"))
   bytecodeFile <- return (wordsStringAsg (unPack ls))
   -- bytecodeIndexList <- transformBytecodeAddIndex bytecodeFile
   return bytecodeFile
@@ -46,7 +50,7 @@ initByte = do
 
 -- we start with empty state
 initState :: MonadIO m => m ( StateStack)
-initState = do 
+initState = do
   return $ StateStack {
     stackComputation = [],
     variables = [],
