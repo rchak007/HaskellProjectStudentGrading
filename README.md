@@ -3,6 +3,10 @@ Automate Student Grading
 
 
 
+[Haskell main program - Main.hs](https://github.com/rchak007/HaskellProjectStudentGrading/blob/main/bytecode/src/Main.hs) 
+
+
+
 ## Summary
 
 This project takes a Pseudo code for Students assignment in a file which has some basic Add/Multiply set of expressions and helps the Professor pre-screen by running students assigment to see the completeness of Assignment.
