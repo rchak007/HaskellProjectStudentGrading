@@ -1,5 +1,11 @@
 # Project StudentGrading
-Automate Student Grading 
+Automate Student Grading using Haskell
+
+
+
+
+
+![image-20230615221528672](Images/image-20230615221528672.png)
 
 
 
@@ -62,9 +68,62 @@ MonadIO m, MonadReader [ByteCodeIndexed] m, MonadState StateStack m
 
 #### Implementation 
 
-we start by reading the file and unpacking each instruction into our custom data type ByteCode.
+we start by reading the student's assignment file and unpacking each instruction into our custom data type ByteCode.
 
-Then due to the nature of looking back to see if Write has a preceding Load etc. we not move the ByteCode to index each instruction into ByteCodeIndexed list. This way when there is a Write instruction we make immediately preceding there is a Load instruction. 
+```haskell
+-- sample Student assignment
+Load_val 1
+Write_var X
+Load_val 22
+Write_var Y
+Read_var X
+Load_val 5
+Add
+Read_var Y
+Multiply
+Return_value
+```
+
+
+
+```haskell
+-- Reads the file and gets Text.Text
+-- then we unpack it to String using `unPack` 
+-- then we convert to ByteCode data type with `wordsStringAsg`
+initByte :: MonadIO m => m [ByteCode Int String]
+initByte = do
+  ls <- io (fmap Text.lines (Text.readFile "src/assg1.txt"))
+  bytecodeFile <- return (wordsStringAsg (unPack ls))
+  return bytecodeFile
+```
+
+
+
+Then due to the nature of looking back to see if Write has a preceding Load etc. we now move the ByteCode to index each instruction into ByteCodeIndexed list. This way when there is a Write instruction we make immediately preceding there is a Load instruction. 
+
+```haskell
+transformBytecodeAddIndex :: Int -> [ByteCode Int String] -> [ByteCodeIndexed]
+transformBytecodeAddIndex _ [] = []
+transformBytecodeAddIndex i [bc] = [(bc,i)]
+transformBytecodeAddIndex i (bc:bcs) = (bc,i) : transformBytecodeAddIndex (i+1) bcs
+
+bytecodeIndexList :: MonadIO m => [ByteCode Int String] -> Int -> m [ByteCodeIndexed]
+bytecodeIndexList asgList i = return (transformBytecodeAddIndex i asgList)
+
+```
+
+
+
+Assignment is converted to:
+
+```haskell
+*******************   Assignment with index: 
+[(Load_val 1,1),(Write_var "X",2),(Load_val 22,3),(Write_var "Y",4),(Read_var "X",5),(Load_val 5,6),(Add,7),(Read_var "Y",8),(Multiply,9),(Return_value,10)]
+```
+
+
+
+
 
 First we update the state writeIndex with all the writes we have. 
 
@@ -73,6 +132,30 @@ Then we process all the Load instructions and put indexs on each Load.
 Next step we create the Variables list for the writes but also do error handling to make sure Write precedes with Load. At this point we have all our varibles.
 
 Now we execute the `compute` function that reads each instruction and starts building and consuming the `StackComputation`
+
+```haskell
+-- uses Monad Reader to get the ByteCodeIndexed
+-- calls handleWrite which indexes all the Write instructions into State writesIndex
+-- calls handleLoad which indexed all the Load instructions into the State loadIndex
+-- calls handleVariables - this uses Write to get preceding Load to store as variables List 
+--      which can be accessed later as Read. Also removes the Load index since we wont use that Load fo consumption 
+--                       in future as these will be accessed with Read.
+-- calls compute which parses instruction one by one and either pushes in to Stack computation 
+--        or uses for consumption and stores in stack after value is computed.
+operations :: (MonadIO m, MonadReader [ByteCodeIndexed] m, MonadState StateStack m) => m ()
+operations = do 
+    byteAsgIndexed <- ask
+    handleWrite byteAsgIndexed  
+    handleLoad byteAsgIndexed  
+    -- renderState
+    handleVariables byteAsgIndexed 
+    -- renderState
+    io . putStrLn $ "*******************  Final State "
+    compute byteAsgIndexed 
+    renderState
+```
+
+
 
 A Load (only the non Load/write combo are considered) or Read will result is Pushing the value into the stack computation to be consumed later.
 

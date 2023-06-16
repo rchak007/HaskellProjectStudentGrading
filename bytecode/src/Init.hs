@@ -35,17 +35,18 @@ strByte (w:w2:ws)
 -- then we convert to ByteCode data type with `wordsStringAsg`
 
 initByte :: MonadIO m => m [ByteCode Int String]
--- initByte :: MonadIO m => m  [ByteCodeIndexed]
 initByte = do
   ls <- io (fmap Text.lines (Text.readFile "src/assg1.txt"))
+  bytecodeFile <- return (wordsStringAsg (unPack ls))
+  return bytecodeFile
+
+-- initByte :: MonadIO m => m  [ByteCodeIndexed]
 --   ls <- io (fmap Text.lines (Text.readFile "src/assg2Err.txt"))
 --   ls <- io (fmap Text.lines (Text.readFile "src/assg3AddErr.txt"))
 --  ls <- io (fmap Text.lines (Text.readFile "src/assg4.txt"))
   -- ls <- io (fmap Text.lines (Text.readFile "src/assg5ReturnErr.txt"))
   -- ls <- io (fmap Text.lines (Text.readFile "src/assg6ErrReturnComp.txt"))
-  bytecodeFile <- return (wordsStringAsg (unPack ls))
   -- bytecodeIndexList <- transformBytecodeAddIndex bytecodeFile
-  return bytecodeFile
 
 
 -- we start with empty state
